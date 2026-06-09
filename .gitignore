@@ -18,3 +18,7 @@ AGENTS.md
 
 # Experimental code/artifacts
 dev/
+
+# Per-run logs (archived in logs/ but not committed)
+logs/*.log
+run.log

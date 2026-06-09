@@ -702,3 +702,16 @@ print(f"total_tokens_M:   {total_tokens / 1e6:.1f}")
 print(f"num_steps:        {step}")
 print(f"num_params_M:     {num_params / 1e6:.1f}")
 print(f"depth:            {DEPTH}")
+
+# Auto-archive run.log to logs/<commit>.log
+import subprocess, shutil as _shutil
+sys.stdout.flush()
+try:
+    _commit = subprocess.check_output(
+        ["git", "rev-parse", "--short", "HEAD"], text=True, stderr=subprocess.DEVNULL
+    ).strip()
+    os.makedirs("logs", exist_ok=True)
+    if os.path.exists("run.log"):
+        _shutil.copy("run.log", f"logs/{_commit}.log")
+except Exception:
+    pass

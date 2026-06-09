@@ -1,0 +1,3 @@
+commit	val_bpb	memory_gb	status	description
+39d586d	0.798100	0.0	keep	baseline — depth=4, embd=256, 2 heads, 7.3M params, TinyStories
+uncommitted	2.403592	0.0	discard	tied embeddings (wte=lm_head weight) — LR asymmetry breaks training

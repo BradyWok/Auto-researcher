@@ -44,26 +44,25 @@ Replaced the parallel multi-shard downloader (argparse + multiprocessing Pool) w
 
 Loss curve: 8.32 → 2.09 over 148 steps.
 
-## Planned Experiments
+## Experiments
 
-Each experiment will be run for the standard 5-minute budget and val_bpb recorded.
+| Experiment | val_bpb | Δ vs baseline | Status | Notes |
+|------------|---------|---------------|--------|-------|
+| Baseline | 0.7981 | — | ✅ keep | TinyStories, 4-layer, 256 embd |
+| Tied embeddings | 2.4036 | +1.605 | ❌ discard | See note below |
+| SwiGLU | | | | |
+| RMSNorm | | | | |
+| RoPE | | | | |
+| Cosine schedule | | | | |
 
-- [ ] **SwiGLU** — replace standard FFN activation with SwiGLU (used in LLaMA/PaLM). Hypothesis: better loss per parameter.
-- [ ] **RMSNorm** — replace LayerNorm with RMSNorm. Simpler, faster, and standard in modern LLMs.
-- [ ] **Tied embeddings** — share weights between `wte` and `lm_head`. Reduces parameter count by ~1M, may regularize.
-- [ ] **RoPE** — replace learned positional embeddings with Rotary Position Embeddings. Better length generalization.
-- [ ] **Cosine schedule** — replace current LR schedule with a full cosine decay. Hypothesis: smoother convergence.
+### Why tied embeddings failed
 
-Results table will be updated as experiments run:
+Tying `wte` and `lm_head` to the same weight matrix is a common technique (GPT-2, etc.), but it conflicts with how this model is trained. The optimizer uses a **150× LR asymmetry** between the two weights on purpose:
 
-| Experiment | val_bpb | Δ vs baseline | Notes |
-|------------|---------|---------------|-------|
-| Baseline | 0.7981 | — | TinyStories, 4-layer, 256 embd |
-| SwiGLU | | | |
-| RMSNorm | | | |
-| Tied embeddings | | | |
-| RoPE | | | |
-| Cosine schedule | | | |
+- `wte` (input embedding): LR ≈ 1.04 — trained aggressively so token representations diverge quickly
+- `lm_head` (output projection): LR ≈ 0.007 — trained conservatively so initial logits stay near-uniform
+
+With tying, both must share one LR. Using the embedding LR destabilizes the output projection; using the lm_head LR starves the embedding. Training stalled at loss ~7 (random-chance level for 4096 tokens) and never recovered. The 1M parameter saving isn't worth redesigning the optimizer around.
 
 ## License
 
